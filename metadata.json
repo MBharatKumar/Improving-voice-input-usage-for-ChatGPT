@@ -1,0 +1,7 @@
+{
+  "name": "ChatGPT Voice Chat",
+  "description": "A prototype of a mobile chat application with enhanced voice input features, powered by an AI model. It nudges users to utilize voice for a faster and more intuitive experience.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
