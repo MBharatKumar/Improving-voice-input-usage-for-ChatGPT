@@ -9,6 +9,7 @@ import { InfoCard } from './components/InfoCard';
 import { VoiceNudge } from './components/VoiceNudge';
 import { VoiceSuccessToast } from './components/VoiceSuccessToast';
 import { SparkleIcon } from './components/Icons';
+import { useSpeechRecognition } from './hooks/useSpeechRecognition';
 
 const App: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -25,6 +26,18 @@ const App: React.FC = () => {
   const [showVoiceSuccessToast, setShowVoiceSuccessToast] = useState<boolean>(false);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  const {
+    transcript,
+    isListening,
+    startListening,
+    stopListening,
+    cancelListening,
+    browserSupportsSpeechRecognition,
+    clearTranscript,
+  } = useSpeechRecognition();
+  const prevIsListening = useRef(isListening);
+
 
   useEffect(() => {
     try {
@@ -105,6 +118,14 @@ const App: React.FC = () => {
       setIsLoading(false);
     }
   }, [chat, isLoading, showVoiceBetterCard, showPlusCard, messages.length]);
+  
+  useEffect(() => {
+    if (prevIsListening.current && !isListening && transcript) {
+      handleSendMessage(transcript, true);
+      clearTranscript();
+    }
+    prevIsListening.current = isListening;
+  }, [isListening, transcript, handleSendMessage, clearTranscript]);
 
   return (
     <div className="h-screen w-screen bg-white text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100 flex flex-col font-sans max-w-lg mx-auto">
@@ -160,13 +181,22 @@ const App: React.FC = () => {
 
       {showVoiceNudge && <VoiceNudge query={nudgeableQuery} onUseVoice={() => {
         setShowVoiceNudge(false);
-        // This is a conceptual trigger; the actual voice input is user-initiated from ChatInput.
+        startListening();
       }} onCancel={() => setShowVoiceNudge(false)} />}
       
       {showVoiceSuccessToast && <VoiceSuccessToast />}
 
       <footer className="p-4 border-t border-zinc-200 dark:border-zinc-700">
-        <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+        <ChatInput 
+          onSendMessage={handleSendMessage} 
+          isLoading={isLoading} 
+          transcript={transcript}
+          isListening={isListening}
+          startListening={startListening}
+          stopListening={stopListening}
+          cancelListening={cancelListening}
+          browserSupportsSpeechRecognition={browserSupportsSpeechRecognition}
+        />
         <p className="text-xs text-center text-zinc-500 dark:text-zinc-400 mt-3">
             ChatGPT can make mistakes. Check important info.
         </p>

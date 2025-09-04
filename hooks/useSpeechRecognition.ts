@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 // Polyfill for browser compatibility
@@ -24,13 +25,11 @@ export const useSpeechRecognition = () => {
     recognition.lang = 'en-US';
 
     recognition.onresult = (event: any) => {
-      let finalTranscript = '';
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
-        }
-      }
-      setTranscript(prev => prev + finalTranscript);
+      const transcriptArray = Array.from(event.results)
+        .map((result: any) => result[0])
+        .map((result) => result.transcript);
+      const fullTranscript = transcriptArray.join('');
+      setTranscript(fullTranscript);
     };
 
     recognition.onerror = (event: any) => {
@@ -61,9 +60,15 @@ export const useSpeechRecognition = () => {
   const stopListening = () => {
     if (recognitionRef.current && isListening) {
       recognitionRef.current.stop();
-      setIsListening(false);
     }
   };
+  
+  const cancelListening = useCallback(() => {
+    if (recognitionRef.current && isListening) {
+      setTranscript('');
+      recognitionRef.current.stop();
+    }
+  }, [isListening]);
 
   const clearTranscript = useCallback(() => {
     setTranscript('');
@@ -75,6 +80,7 @@ export const useSpeechRecognition = () => {
     error,
     startListening,
     stopListening,
+    cancelListening,
     browserSupportsSpeechRecognition,
     clearTranscript,
   };
