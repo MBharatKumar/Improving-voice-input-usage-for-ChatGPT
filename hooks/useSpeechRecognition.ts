@@ -33,7 +33,10 @@ export const useSpeechRecognition = () => {
     };
 
     recognition.onerror = (event: any) => {
-      setError(`Speech recognition error: ${event.error}`);
+      // Don't set an error on 'aborted' as it's an expected action.
+      if (event.error !== 'aborted') {
+        setError(`Speech recognition error: ${event.error}`);
+      }
       setIsListening(false);
     };
 
@@ -65,8 +68,10 @@ export const useSpeechRecognition = () => {
   
   const cancelListening = useCallback(() => {
     if (recognitionRef.current && isListening) {
+      // Use abort() to stop recognition without processing a final result.
+      // This prevents a final `onresult` event from firing after cancellation.
+      recognitionRef.current.abort();
       setTranscript('');
-      recognitionRef.current.stop();
     }
   }, [isListening]);
 
